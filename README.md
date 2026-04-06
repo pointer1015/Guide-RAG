@@ -90,7 +90,7 @@ cd frontend
 npm install
 npm run dev
 ```
-访问 `http://localhost:5173` 开始体验。
+访问 `http://localhost:3000` 开始体验。
 
 ## 🤝 参与贡献
 我们非常欢迎您的参与！请在开始之前阅读我们的 [Contributing Guide](CONTRIBUTING.md)。

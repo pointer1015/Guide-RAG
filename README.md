@@ -17,10 +17,10 @@
 
 ### 核心特性
 
-- **🚀 高性能微服务架构**：基于 Spring Boot 3.2 和 Spring Cloud Alibaba 2023 深度优化。
+- **🚀 高性能微服务架构**：基于 Spring Boot 3 和 Spring Cloud Alibaba 深度优化。
 - **🧠 强大的 RAG 编排**：利用 LangChain4j 提供灵活的 LLM、Embedding 和 Retriever 集成。
 - **🖼️ 多模态支持**：支持文档、图片及复杂数据的混合检索。
-- **📊 工业级向量数据库**：集成 Milvus 2.4，支持大规模、高并发的数据检索。
+- **📊 工业级向量数据库**：集成 Milvus，支持大规模、高并发的数据检索。
 - **🛡️ 安全与权限**：统一的鉴权网关与用户权限管理。
 - **🎨 极速前端响应**：基于 Vue 3 + Vite + TypeScript 构建，流畅的流式输出体验。
 
@@ -48,15 +48,15 @@ graph TD
 ## 🛠️ 技术栈
 
 ### 后端 (Backend)
-- **核心框架**: Spring Boot 3.2.4, Spring Cloud Alibaba 2023
-- **AI 编排**: LangChain4j 0.36.2
-- **向量数据库**: Milvus 2.4.0
+- **核心框架**: Spring Boot, Spring Cloud Alibaba
+- **AI 编排**: LangChain4j 
+- **向量数据库**: Milvus 
 - **对象存储**: MinIO
-- **持久层**: MyBatis, MySQL 8.0 / PostgreSQL
-- **网关鉴权**: Spring Cloud Gateway, JJWT
+- **持久层**: MyBatis, PostgreSQL
+- **网关鉴权**: Spring Cloud Gateway, JWT
 
 ### 前端 (Frontend)
-- **框架**: Vue 3.5, TypeScript, Vite 5
+- **框架**: Vue 3, TypeScript, Vite
 - **状态管理**: Pinia
 - **UI 组件**: Lucide Icons, Markdown-it
 - **网络请求**: Axios
@@ -67,7 +67,7 @@ graph TD
 确保您的机器已安装：
 - **Docker & Docker Compose**
 - **JDK 21**
-- **Maven 3.9+**
+- **Maven**
 
 ### 2. 启动依赖中间件 (Milvus, MinIO, etcd)
 ```bash

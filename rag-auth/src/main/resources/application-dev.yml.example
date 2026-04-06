@@ -1,0 +1,47 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    # PostgreSQL 连接配置
+    driver-class-name: org.postgresql.Driver
+    # guide_rag 请根据实际数据库名称调整
+    url: jdbc:postgresql://127.0.0.1:5432/guide_rag?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:your_password_here} # 请替换为真实的密码
+
+  data:
+    redis:
+      # Redis 连接配置
+      host: 127.0.0.1
+      port: 6379
+      password: ${REDIS_PASSWORD:} # 没有密码则留空
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+
+mybatis:
+  # Mapper XML 路径
+  mapper-locations: classpath:mapper/*.xml
+  # 实体类包路径，方便 XML 中直接使用简写类名
+  type-aliases-package: com.guiderag.auth.model.entity
+  configuration:
+    # 开启驼峰命名自动映射 (如 database 的 user_name 映射到 java 的 username)
+    map-underscore-to-camel-case: true
+    # 开发环境下打印 SQL 语句，方便调试
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+minio:
+  endpoint: http://127.0.0.1:9000
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket-name: guide-rag-auth
+
+logging:
+  level:
+    # 单独对 mapper 包开启 debug 级别，以输出绑定的参数
+    com.guiderag.auth.mapper: debug

@@ -1,0 +1,79 @@
+spring:
+  cloud:
+    gateway:
+      # 全局 CORS 配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://127.0.0.1:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+            maxAge: 3600
+      
+      # 路由配置
+      routes:
+        # 认证服务路由
+        - id: rag-auth
+          uri: lb://rag-auth
+          predicates:
+            - Path=/rag/v1/auth/**
+          filters:
+            - StripPrefix=0
+        
+        # 用户个人资料路由（头像、资料修改、密码修改等）
+        - id: rag-user
+          uri: lb://rag-auth
+          predicates:
+            - Path=/rag/v1/user/**
+          filters:
+            - StripPrefix=0
+        
+        # 知识库服务路由
+        - id: rag-knowledge
+          uri: lb://rag-knowledge
+          predicates:
+            - Path=/rag/v1/knowledge-bases/**,/rag/v1/documents/**
+          filters:
+            - StripPrefix=0
+        
+        # 会话服务路由
+        - id: rag-chat-sessions
+          uri: lb://rag-chat
+          predicates:
+            - Path=/rag/v1/sessions/**
+          filters:
+            - StripPrefix=0
+        
+        # 聊天服务路由
+        - id: rag-chat
+          uri: lb://rag-chat
+          predicates:
+            - Path=/rag/v1/chat/**
+          filters:
+            - StripPrefix=0
+
+        # 模型配置路由
+        - id: rag-model-config
+          uri: lb://rag-chat
+          predicates:
+            - Path=/rag/v1/model-config/**
+          filters:
+            - StripPrefix=0
+
+# 白名单配置（不需要认证的路径）
+gateway:
+  whitelist:
+    paths:
+      - /rag/v1/auth/register
+      - /rag/v1/auth/login
+      - /rag/v1/auth/refresh
+      - /rag/v1/auth/captcha

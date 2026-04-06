@@ -1,0 +1,33 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: rag-knowledge
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        server-addr: 127.0.0.1:8848
+        file-extension: yml
+  config:
+    import:
+      - optional:nacos:rag-knowledge-dev.yml?refresh=true
+      - optional:nacos:rag-common.yml
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+
+knife4j:
+  enable: true
+  openapi:
+    title: Guide-RAG 核心知识库微服务 (Knowledge Service)
+    description: 涵盖文档解析、分块切割、向量数据库及对象存储的上传交互 API
+    email: dev@guiderag.com
+    version: v1.0.0

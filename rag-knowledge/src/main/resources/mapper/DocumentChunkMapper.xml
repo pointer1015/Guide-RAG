@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guiderag.knowledge.mapper.DocumentChunkMapper">
+
+    <resultMap id="BaseResultMap" type="DocumentChunk">
+        <id column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="document_id" property="documentId"/>
+        <result column="chunk_index" property="chunkIndex"/>
+        <result column="modality" property="modality"/>
+        <result column="content_text" property="contentText"/>
+        <result column="token_count" property="tokenCount"/>
+        <result column="embedding_model" property="embeddingModel"/>
+        <result column="vector_id" property="vectorId"/>
+        <result column="metadata" property="metadata"/>
+        <result column="gmt_create" property="gmtCreate"/>
+        <result column="embedding_status" property="embeddingStatus"/>
+        <result column="is_deleted" property="isDeleted"/>  <!-- ✅ 新增映射 -->
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO document_chunk (
+            id, tenant_id, document_id, chunk_index, modality, content_text,
+            token_count, embedding_model, vector_id, metadata,
+            gmt_create, embedding_status, is_deleted
+        )
+        VALUES (
+                   #{id}, #{tenantId}, #{documentId}, #{chunkIndex}, #{modality}, #{contentText},
+                   #{tokenCount}, #{embeddingModel}, #{vectorId}, #{metadata}::jsonb,
+                   CURRENT_TIMESTAMP, 0, 0
+               )
+    </insert>
+
+    <insert id="batchInsert">
+        insert into document_chunk(tenant_id, document_id,
+        chunk_index, modality,
+        content_text, token_count,
+        embedding_model, vector_id,
+        metadata, gmt_create,
+        embedding_status, is_deleted)
+        values
+        <foreach collection="list" item="chunk" separator=",">
+            #{chunk.tenantId},
+            #{chunk.documentId},
+            #{chunk.chunkIndex},
+            #{chunk.modality},
+            #{chunk.contentText},
+            #{chunk.tokenCount},
+            #{chunk.embeddingModel},
+            #{chunk.vectorId},
+            #{chunk.metadata}::jsonb,
+            NOW(),
+            0,
+            0
+        </foreach>
+    </insert>
+
+    <!-- 根据向量 ID 批量查询 -->
+    <select id="selectByVectorIds" resultMap="BaseResultMap">
+        select id, tenant_id, document_id, chunk_index, modality, content_text,
+               token_count, embedding_model, vector_id, metadata,
+               gmt_create, embedding_status, is_deleted
+        from document_chunk
+        where vector_id in
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+            and is_deleted = 0
+        order by case
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            when vector_id = #{id} then #{index}
+        </foreach>
+        end
+    </select>
+
+    <!-- 根据文档 ID 查询所有块 -->
+    <select id="selectByDocumentId" resultMap="BaseResultMap">
+        select id,
+               tenant_id,
+               document_id,
+               chunk_index,
+               modality,
+               content_text,
+               token_count,
+               embedding_model,
+               vector_id,
+               metadata,
+               gmt_create,
+               embedding_status,
+               is_deleted
+        from document_chunk
+        where document_id = #{documentId}
+          and is_deleted = 0
+        order by chunk_index asc
+    </select>
+
+
+    <!-- 更新 Embedding 状态 -->
+    <update id="updateEmbeddingStatus">
+        UPDATE document_chunk
+        SET embedding_status = #{status}
+        WHERE id = #{id}
+        AND is_deleted = 0
+    </update>
+
+    <!-- 逻辑删除 -->
+    <update id="logicalDeleteByDocumentId">
+        UPDATE document_chunk
+        SET is_deleted = 1
+        WHERE document_id = #{documentId}
+        AND is_deleted = 0
+    </update>
+
+    <!-- 统计文档的块数量 -->
+    <select id="countByDocumentId" resultType="int">
+        SELECT COUNT(*)
+        FROM document_chunk
+        WHERE document_id = #{documentId}
+        AND is_deleted = 0
+    </select>
+
+    <!-- 查询待处理的文档块 -->
+    <select id="selectPendingChunks" resultMap="BaseResultMap">
+        SELECT
+        id, tenant_id, document_id, chunk_index, modality, content_text,
+        token_count, embedding_model, vector_id, metadata,
+        gmt_create, embedding_status, is_deleted
+        FROM document_chunk
+        WHERE embedding_status = 0
+        AND is_deleted = 0
+        ORDER BY gmt_create ASC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

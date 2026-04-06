@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guiderag.chat.mapper.MessageMapper">
+
+    <resultMap id="MessageResultMap" type="com.guiderag.chat.model.entity.Message">
+        <id property="messageId" column="id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="sessionId" column="session_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="role" column="role"/>
+        <result property="content" column="content"/>
+        <result property="contentType" column="content_type"/>
+        <result property="referencedChunkIds" column="referenced_chunk_ids"/>
+        <result property="retrievalContext" column="retrieval_context"/>
+        <result property="tokenInput" column="token_input"/>
+        <result property="tokenOutput" column="token_output"/>
+        <result property="latencyMs" column="latency_ms"/>
+        <result property="gmtCreate" column="gmt_create"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        , tenant_id, session_id, user_id, role, content, content_type,
+         referenced_chunk_ids, retrieval_context, token_input, token_output,
+         latency_ms, gmt_create, is_deleted
+    </sql>
+
+    <!-- 插入消息 -->
+    <insert id="insert" parameterType="com.guiderag.chat.model.entity.Message">
+        INSERT INTO message (id, tenant_id, session_id, user_id, role, content, content_type,
+                             referenced_chunk_ids, retrieval_context, token_input, token_output,
+                             latency_ms, gmt_create, is_deleted)
+        VALUES (#{messageId},
+                #{tenantId},
+                #{sessionId},
+                #{userId},
+                #{role},
+                #{content},
+                #{contentType},
+                #{referencedChunkIds}::jsonb,
+                #{retrievalContext}::jsonb,
+                #{tokenInput},
+                #{tokenOutput},
+                #{latencyMs},
+                CURRENT_TIMESTAMP,
+                0)
+    </insert>
+
+    <!--  根据会话ID查询消息列表  -->
+    <select id="selectBySessionId" resultMap="MessageResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from message
+        where session_id = #{sessionId}
+        and tenant_id = #{tenantId}
+        and is_deleted = 0
+        <if test="role != null and role != ''">
+            and role = #{role}
+        </if>
+        order by gmt_create asc
+    </select>
+
+    <!--  根据Id查询消息  -->
+    <select id="selectById" resultMap="MessageResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from message
+        where id = #{id}
+        and tenant_id = #{tenantId}
+        and is_deleted = 0
+    </select>
+
+    <!-- 软删除消息 -->
+    <update id="deleteById">
+        UPDATE message
+        SET is_deleted = 1
+        WHERE id = #{id}
+          AND tenant_id = #{tenantId}
+          AND is_deleted = 0
+    </update>
+
+    <!-- 批量软删除会话下所有消息 -->
+    <update id="deleteBySessionId">
+        UPDATE message
+        SET is_deleted = 1
+        WHERE session_id = #{sessionId}
+          AND tenant_id = #{tenantId}
+          AND is_deleted = 0
+    </update>
+
+    <!-- 【新增】查询最近的历史消息（多轮对话用） -->
+    <!-- 
+        设计说明：
+        1. 只查询 user 和 assistant 角色的消息（过滤 system、tool 消息）
+        2. 按时间倒序查询最近 N 条
+        3. 业务层需要反转顺序（从旧到新）再传给 LLM
+        4. 使用索引: idx_message_session_id_gmt_create (已在schema.sql中定义)
+    -->
+    <select id="selectRecentBySessionId" resultMap="MessageResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE session_id = #{sessionId}
+          AND tenant_id = #{tenantId}
+          AND is_deleted = 0
+          AND role IN ('user', 'assistant')
+        ORDER BY gmt_create DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

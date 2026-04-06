@@ -1,0 +1,87 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:5432/guide_rag?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:your_password_here}
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 500MB
+
+minio:
+  endpoint: http://127.0.0.1:9000
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket-name: guide-rag-knowledge
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.guiderag.knowledge.model.entity
+  configuration:
+    # 开启驼峰命名转换
+    map-underscore-to-camel-case: true
+    # 开启日志输出
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.guiderag.knowledge.mapper: debug # MyBatis SQL 日志
+    com.guiderag.knowledge.service: info
+    io.milvus: warn # Milvus SDK 日志（减少噪音）
+
+pagehelper:
+  helper-dialect: postgresql # PostgreSQL 方言（生成正确的 LIMIT/OFFSET 语法）
+  reasonable: true # 页码越界时自动修正
+  support-methods-arguments: true # 支持方法参数传递分页参数
+
+# Milvus 向量数据库配置
+milvus:
+  host: 127.0.0.1
+  port: 19530
+  database: default # 数据库名称（多租户可按需创建不同数据库）
+  connect-timeout-ms: 10000 # 连接超时 10秒
+  keep-alive-time-ms: 55000 # 心跳间隔 55秒
+  idle-timeout-ms: 300000 # 空闲连接超时 5分钟
+  secure: false # 开发环境不启用 TLS
+  dimension: 1024 # bge-m3 本地模型输出维度为 1024
+
+# Embedding 向量化配置
+embedding:
+  # 选择提供商：
+  # 1) 内置: openai | ollama | gemini
+  # 2) 自定义: 任意 provider 名称（需在 embedding.providers.<provider> 下配置）
+  # 注意：gemini 的 OpenAI 兼容接口（/v1beta/openai）不支持 embedding 模型，
+  #       text-embedding-004 必须通过 Gemini 原生接口调用，此处改用 ollama 本地方案。
+  provider: ollama
+
+  # OpenAI Embedding 配置（使用 text-embedding-3-large）
+  openai:
+    api-key: ${OPENAI_API_KEY:sk-xxx} # 从环境变量读取，默认值 sk-xxx
+    base-url: https://api.openai.com/v1
+    model: text-embedding-3-large # 推荐模型（3072 维，性能最佳）
+    dimensions: 1024 # 自定义维度（可选，节省存储空间）
+    timeout: 60 # 超时时间（秒）
+
+  # Ollama Embedding 配置（本地部署，免费）
+  ollama:
+    base-url: http://127.0.0.1:11434
+    model: bge-m3 # 推荐中文模型（1024 维，支持多语言）
+    timeout: 60
+
+  # Gemini Embedding（OpenAI 兼容接口）
+  gemini:
+    api-key: ${GEMINI_API_KEY:your-gemini-api-key-here}
+    base-url: https://generativelanguage.googleapis.com/v1beta/openai
+    model: text-embedding-004   # Gemini 专用 Embedding 模型（768 维），不能用生成模型
+    timeout: 60
+
+  # 自定义 OpenAI 兼容 embedding 提供商（示例）
+  providers:
+    myprovider:
+      api-key: ${MY_EMBEDDING_API_KEY:}
+      base-url: https://api.example.com/v1
+      model: text-embedding-custom
+      dimensions: 1024
+      timeout: 60

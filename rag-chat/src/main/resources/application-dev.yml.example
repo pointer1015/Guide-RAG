@@ -1,0 +1,132 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: rag-chat
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        server-addr: 127.0.0.1:8848
+        file-extension: yml
+  config:
+    import:
+      - optional:nacos:rag-chat-dev.yml?refresh=true
+      - optional:nacos:rag-common.yml
+  # 数据源配置（PostgreSQL）
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/guide_rag
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:your_password_here}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Redis 配置
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+      password: ${REDIS_PASSWORD:}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+
+knife4j:
+  enable: true
+  openapi:
+    title: Guide-RAG 对话编排微服务 (Chat Service)
+    description: 企业级 RAG 检索大模型问答、消息历史管理API
+    email: dev@guiderag.com
+    version: v1.0.0
+
+  # MyBatis 配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.guiderag.chat.model.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# PageHelper 分页插件
+pagehelper:
+  helper-dialect: postgresql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+
+# LLM 配置
+llm:
+  provider: ollama
+
+  # Ollama 本地模型配置（默认启用）
+  ollama:
+    base-url: http://localhost:11434
+    model: deepseek-r1:1.5b
+
+  # DeepSeek 配置（国内云端备选）
+  deepseek:
+    api-key: ${DEEPSEEK_API_KEY:sk-your-deepseek-api-key-here}
+    base-url: https://api.deepseek.com
+    model: deepseek-chat
+
+  # OpenAI 配置（备选）
+  openai:
+    api-key: ${OPENAI_API_KEY:sk-your-openai-api-key-here}
+    base-url: https://api.openai.com/v1
+    model: gpt-4o
+
+  # Gemini 配置（OpenAI 兼容接口）
+  gemini:
+    api-key: ${GEMINI_API_KEY:your-gemini-api-key-here}
+    base-url: https://generativelanguage.googleapis.com/v1beta/openai
+    model: gemini-3-flash-preview
+
+  # 自定义 OpenAI 兼容模型配置（示例）
+  providers:
+    openrouter:
+      api-key: ${OPENROUTER_API_KEY:your-openrouter-api-key}
+      base-url: https://openrouter.ai/api/v1
+      model: qwen/qwen3.6-plus:free
+    myprovider:
+      api-key: ${MY_LLM_API_KEY:}
+      base-url: https://api.example.com/v1
+      model: my-model-name
+
+  timeout: 120
+
+# Feign 配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 60000
+  sentinel:
+    enabled: false
+  hystrix:
+    enabled: false
+
+# 日志配置
+logging:
+  level:
+    com.guiderag.chat: DEBUG
+    com.guiderag.chat.mapper: DEBUG

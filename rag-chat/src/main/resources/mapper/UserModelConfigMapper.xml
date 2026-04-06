@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guiderag.chat.mapper.UserModelConfigMapper">
+
+    <resultMap id="UserModelConfigResultMap"
+               type="com.guiderag.chat.model.entity.UserModelConfig">
+        <id property="id" column="id" />
+        <result property="tenantId" column="tenant_id" />
+        <result property="userId" column="user_id" />
+        <result property="provider" column="provider" />
+        <result property="apiKey" column="api_key" />
+        <result property="baseUrl" column="base_url" />
+        <result property="model" column="model" />
+        <result property="isActive" column="is_active" />
+        <result property="gmtCreate" column="gmt_create" />
+        <result property="gmtModified" column="gmt_modified" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, tenant_id, user_id, provider, api_key, base_url, model,
+        is_active, gmt_create, gmt_modified
+    </sql>
+
+    <!-- 根据租户ID和用户ID查询 -->
+    <select id="selectByTenantAndUser" resultMap="UserModelConfigResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM user_model_config
+        WHERE tenant_id = #{tenantId}
+          AND user_id = #{userId}
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" parameterType="com.guiderag.chat.model.entity.UserModelConfig"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_model_config (tenant_id, user_id, provider, api_key, base_url, model, is_active,
+                                       gmt_create, gmt_modified)
+        VALUES (#{tenantId}, #{userId}, #{provider}, #{apiKey}, #{baseUrl}, #{model}, #{isActive},
+                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+
+    <!-- 更新（按 tenant_id + user_id） -->
+    <update id="updateByTenantAndUser" parameterType="com.guiderag.chat.model.entity.UserModelConfig">
+        UPDATE user_model_config
+        SET provider     = #{provider},
+            api_key      = #{apiKey},
+            base_url     = #{baseUrl},
+            model        = #{model},
+            is_active    = #{isActive},
+            gmt_modified = CURRENT_TIMESTAMP
+        WHERE tenant_id = #{tenantId}
+          AND user_id = #{userId}
+    </update>
+
+    <!-- 物理删除 -->
+    <delete id="deleteByTenantAndUser">
+        DELETE FROM user_model_config
+        WHERE tenant_id = #{tenantId}
+          AND user_id = #{userId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,142 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: rag-chat
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        server-addr: 127.0.0.1:8848
+        file-extension: yml
+  config:
+    import:
+      - optional:nacos:rag-chat-dev.yml?refresh=true
+      - optional:nacos:rag-common.yml
+  # 数据源配置（PostgreSQL）
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/guide_rag
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:your_password_here}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Redis 配置
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+
+knife4j:
+  enable: true
+  openapi:
+    title: Guide-RAG 对话编排微服务 (Chat Service)
+    description: 企业级 RAG 检索大模型问答、消息历史管理API
+    email: dev@guiderag.com
+    version: v1.0.0
+
+  # MyBatis 配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.guiderag.chat.model.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# PageHelper 分页插件
+pagehelper:
+  helper-dialect: postgresql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+
+# LLM 配置
+llm:
+  # 选择提供商：
+  # 1) 内置: ollama | deepseek | openai | gemini
+  # 2) 自定义: 任意 provider 名称（需在 llm.providers.<provider> 下配置）
+  provider: ollama
+
+  # Ollama 本地模型配置（默认启用）
+  # 前提：本机已安装并运行 Ollama，且已拉取对应模型
+  # 启动命令示例：ollama run qwen2.5:7b
+  ollama:
+    base-url: http://localhost:11434 # Ollama 默认监听地址
+    model: deepseek-r1:1.5b # 替换为你已拉取的模型名，如 llama3.2、mistral 等
+
+  # DeepSeek 配置（国内云端备选）
+  deepseek:
+    api-key: ${DEEPSEEK_API_KEY:sk-your-deepseek-api-key-here} # 环境变量优先
+    base-url: https://api.deepseek.com
+    model: deepseek-chat
+
+  # OpenAI 配置（备选）
+  openai:
+    api-key: ${OPENAI_API_KEY:sk-your-openai-api-key-here}
+    base-url: https://api.openai.com/v1
+    model: gpt-4o
+
+  # Gemini 配置（OpenAI 兼容接口）
+  gemini:
+    api-key: ${GEMINI_API_KEY:your-gemini-api-key-here}
+    base-url: https://generativelanguage.googleapis.com/v1beta/openai
+    model: gemini-3-flash-preview
+
+  # 自定义 OpenAI 兼容模型配置（示例）
+  # 用法：
+  # 1) llm.provider: openrouter
+  # 2) 填写 llm.providers.openrouter.* 三项
+  providers:
+    openrouter:
+      api-key: ${OPENROUTER_API_KEY:your-openrouter-api-key-here}
+      base-url: https://openrouter.ai/api/v1
+      model: qwen/qwen3.6-plus:free # 替换为你想要使用的模型 ID
+    myprovider:
+      api-key: ${MY_LLM_API_KEY:}
+      base-url: https://api.example.com/v1
+      model: my-model-name
+
+  # 超时配置（秒）——本地模型首次推理可能较慢，建议适当调大
+  timeout: 120
+
+# Feign 配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000 # 连接超时 5 秒
+        readTimeout: 60000 # 读取超时 60 秒（LLM 响应较慢）
+  # 启用 Sentinel 降级（可选）
+  sentinel:
+    enabled: false
+  # 启用 Hystrix 降级（可选）
+  hystrix:
+    enabled: false
+
+# 日志配置
+logging:
+  level:
+    com.guiderag.chat: DEBUG
+    com.guiderag.chat.mapper: DEBUG

@@ -1,0 +1,34 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: rag-auth
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        server-addr: 127.0.0.1:8848
+        file-extension: yml
+  config:
+    import:
+      - optional:nacos:rag-auth-dev.yml?refresh=true
+      - optional:nacos:rag-common.yml
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+
+knife4j:
+  enable: true
+  openapi:
+    title: Guide-RAG 认证微服务 (Auth Service)
+    description: 涵盖用户注册、登录、鉴权等企业级 API
+    email: your_email@guiderag.com
+    concat: 架构组
+    version: v1.0.0

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guiderag.chat.mapper.SessionMapper">
+
+    <resultMap
+        id="SessionResultMap"
+        type="com.guiderag.chat.model.entity.Session"
+    >
+        <id property="id" column="id" />
+        <result property="tenantId" column="tenant_id" />
+        <result property="userId" column="user_id" />
+        <result property="knowledgeBaseId" column="knowledge_base_id" />
+        <result property="title" column="title" />
+        <result property="lastMessageAt" column="last_message_at" />
+        <result property="gmtCreate" column="gmt_create" />
+        <result property="gmtModified" column="gmt_modified" />
+        <result property="isDeleted" column="is_deleted" />
+    </resultMap>
+
+     <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, tenant_id, user_id, knowledge_base_id, title,
+         last_message_at, gmt_create, gmt_modified, is_deleted
+    </sql>
+
+     <!-- 插入会话 -->
+    <insert id="insert" parameterType="com.guiderag.chat.model.entity.Session">
+        INSERT INTO session (id, tenant_id, user_id, knowledge_base_id, title, last_message_at, gmt_create,
+                             gmt_modified, is_deleted)
+        VALUES (#{id}, #{tenantId}, #{userId}, #{knowledgeBaseId}, #{title}, #{lastMessageAt}, CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP, 0)
+    </insert>
+
+    <!-- 根据ID查询会话（租户隔离 + 排除软删除） -->
+    <select id="selectById" resultMap="SessionResultMap">
+        SELECT <include refid="Base_Column_List" />
+            FROM session
+        where id = #{id}
+            and tenant_id = #{tenantId}
+            and is_deleted = 0
+    </select>
+
+    <!-- 分页查询用户的会话列表（按最后消息时间倒序） -->
+    <select id="selectByTenantIdAndUserId" resultMap="SessionResultMap">
+        select <include refid="Base_Column_List" />
+            from session
+        where tenant_id = #{tenantId}
+            and user_id = #{userId}
+            and is_deleted = 0
+        order by last_message_at desc NULLS LAST, gmt_create desc
+    </select>
+
+    <!-- 更新会话标题 -->
+    <update id="updateTitle">
+        UPDATE session
+        SET title = #{title},
+            gmt_modified = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+          AND tenant_id = #{tenantId}
+          AND is_deleted = 0
+    </update>
+
+    <!-- 删除会话 -->
+    <update id="deleteById">
+        UPDATE session
+        SET is_deleted = 1,
+            gmt_modified = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+          AND tenant_id = #{tenantId}
+          AND is_deleted = 0
+    </update>
+
+    <update id="updateLastMessageAt">
+    UPDATE session
+    SET last_message_at = #{lastMessageAt},
+        gmt_modified = CURRENT_TIMESTAMP
+    WHERE id = #{sessionId}
+      AND user_id = #{userId}
+      AND is_deleted = 0
+</update>
+</mapper>

@@ -34,7 +34,7 @@ graph TD
     Gateway --> Knowledge[rag-knowledge 知识库管理]
 
     subgraph 存储层
-        MySQL[MySQL / PostgreSQL]
+        PostgreSQL[PostgreSQL]
         Milvus[Milvus 向量库]
         MinIO[MinIO 对象存储]
     end
@@ -42,7 +42,7 @@ graph TD
     Chat --> LLM[LLM / Ollama]
     Knowledge --> Milvus
     Knowledge --> MinIO
-    Auth --> MySQL
+    Auth --> PostgreSQL
 ```
 
 ## 🛠️ 技术栈
